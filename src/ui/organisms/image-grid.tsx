@@ -14,23 +14,23 @@ interface ImageGridProps {
 
 export function ImageGrid({ images, scrapeMode, onToggleImage }: ImageGridProps) {
   return (
-    <Card className="border-none shadow-sm bg-white rounded-2xl h-[calc(100vh-200px)] flex flex-col overflow-hidden">
-      <CardHeader className="border-b border-[#f5f5f5] flex flex-row items-center justify-between py-4">
+    <Card className="border-none shadow-sm bg-white rounded-2xl lg:h-[calc(100vh-200px)] min-h-[400px] flex flex-col overflow-hidden">
+      <CardHeader className="border-b border-[#f5f5f5] flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-2">
         <div>
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg font-semibold">Found Images</CardTitle>
             {scrapeMode && <StatusBadge mode={scrapeMode} />}
           </div>
-          <CardDescription>Preview and select images to include in PDF.</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Preview and select images to include in PDF.</CardDescription>
         </div>
-        {images.length > 0 && <div className="text-[10px] font-mono bg-[#f5f5f5] px-2 py-1 rounded text-[#666]">{images.length} TOTAL</div>}
+        {images.length > 0 && <div className="text-[10px] font-mono bg-[#f5f5f5] px-2 py-1 rounded text-[#666] self-start sm:self-auto">{images.length} TOTAL</div>}
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-full p-6">
+        <ScrollArea className="h-full p-4 sm:p-6">
           {images.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
               <AnimatePresence>
                 {images.map((img, index) => (
                   <ImageCard key={img.url} image={img} index={index} onToggle={() => onToggleImage(index)} />

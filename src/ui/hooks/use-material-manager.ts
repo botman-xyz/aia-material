@@ -21,19 +21,25 @@ export function useMaterialManager() {
   const [scrapeMode, setScrapeMode] = useState<"page" | "sequence" | null>(null);
   const [fileName, setFileName] = useState("");
 
-  const handleScrape = useCallback(async (onScrapeSuccess?: (url: string, mode: "page" | "sequence", count: number, fileName: string) => void) => {
+  const handleScrape = useCallback(async (
+    onScrapeSuccess?: (url: string, mode: "page" | "sequence", count: number, fileName: string, images: ScrapedImage[]) => void,
+    overrideUrl?: string
+  ) => {
+    const targetUrl = overrideUrl || url;
+    if (!targetUrl) return;
+
     setIsScraping(true);
     setImages([]);
     setScrapeMode(null);
     try {
-      const result = await scrapeUseCase.execute(url);
+      const result = await scrapeUseCase.execute(targetUrl);
       setScrapeMode(result.mode);
       setImages(result.images);
-      const inferredName = inferFileName(url);
+      const inferredName = inferFileName(targetUrl);
       setFileName(inferredName);
       
       if (onScrapeSuccess) {
-        onScrapeSuccess(url, result.mode, result.images.length, inferredName);
+        onScrapeSuccess(targetUrl, result.mode, result.images.length, inferredName, result.images);
       }
       
       toast.success(`Found ${result.images.length} images (${result.mode} mode)`);
@@ -42,7 +48,7 @@ export function useMaterialManager() {
     } finally {
       setIsScraping(false);
     }
-  }, [url]);
+  }, [url, scrapeUseCase]);
 
   const handleDownloadPDF = useCallback(async () => {
     const selectedUrls = images.filter((img) => img.selected).map((img) => img.url);
@@ -66,6 +72,12 @@ export function useMaterialManager() {
 
   const toggleImage = useCallback((index: number) => {
     setImages(prev => prev.map((img, i) => (i === index ? { ...img, selected: !img.selected } : img)));
+  }, []);
+
+  const loadImages = useCallback((urls: string[], mode: "page" | "sequence", name: string) => {
+    setScrapeMode(mode);
+    setFileName(name);
+    setImages(urls.map(url => ({ url, selected: true })));
   }, []);
 
   const inferFileName = (sourceUrl: string): string => {
@@ -104,6 +116,7 @@ export function useMaterialManager() {
     handleScrape,
     handleDownloadPDF,
     toggleSelectAll,
-    toggleImage
+    toggleImage,
+    loadImages
   };
 }

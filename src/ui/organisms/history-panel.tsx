@@ -7,7 +7,7 @@ import { StatusBadge } from "../atoms/status-badge";
 
 interface HistoryPanelProps {
   history: HistoryItem[];
-  onSelect: (url: string) => void;
+  onSelect: (item: HistoryItem) => void;
   onDelete: (id: string) => void;
 }
 
@@ -31,7 +31,7 @@ export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps)
                 <div className="flex items-start justify-between gap-3">
                   <div 
                     className="flex-1 min-w-0 cursor-pointer"
-                    onClick={() => onSelect(item.url)}
+                    onClick={() => onSelect(item)}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <StatusBadge mode={item.mode} />
@@ -43,11 +43,11 @@ export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps)
                     <p className="text-sm font-medium truncate text-[#1a1a1a]">{item.fileName || "Untitled"}</p>
                     <p className="text-[10px] text-[#999] truncate">{item.url}</p>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-[#999] hover:text-red-500"
+                      className="h-8 w-8 text-[#999] hover:text-red-500 active:text-red-500"
                       onClick={() => onDelete(item.id)}
                     >
                       <Trash2 size={14} />

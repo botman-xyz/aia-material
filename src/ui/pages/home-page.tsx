@@ -1,4 +1,6 @@
+import { useCallback } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useMaterialManager } from "../hooks/use-material-manager";
 import { useAuth, useHistory } from "../hooks/use-firebase";
 import { MainLayout } from "../templates/main-layout";
@@ -6,6 +8,7 @@ import { ControlPanel } from "../organisms/control-panel";
 import { ImageGrid } from "../organisms/image-grid";
 import { HistoryPanel } from "../organisms/history-panel";
 import { AuthSection } from "../molecules/auth-section";
+import { HistoryItem } from "../../infrastructure/history/history.repository";
 
 export function HomePage() {
   const { user, loading, login, logout } = useAuth();
@@ -22,12 +25,24 @@ export function HomePage() {
     handleScrape,
     handleDownloadPDF,
     toggleSelectAll,
-    toggleImage
+    toggleImage,
+    loadImages
   } = useMaterialManager();
 
-  const onScrapeSuccess = (scrapedUrl: string, mode: "page" | "sequence", count: number, name: string) => {
+  const onScrapeSuccess = useCallback((scrapedUrl: string, mode: "page" | "sequence", count: number, name: string, scrapedImages: { url: string }[]) => {
     if (user) {
-      addToHistory({ url: scrapedUrl, mode, imageCount: count, fileName: name });
+      const imageUrls = scrapedImages.map(img => img.url);
+      addToHistory({ url: scrapedUrl, mode, imageCount: count, fileName: name, images: imageUrls });
+    }
+  }, [user, addToHistory]);
+
+  const handleHistorySelect = (item: HistoryItem) => {
+    setUrl(item.url);
+    if (item.images && item.images.length > 0) {
+      loadImages(item.images, item.mode, item.fileName);
+      toast.success(`Loaded ${item.images.length} images from history`);
+    } else {
+      handleScrape(onScrapeSuccess, item.url);
     }
   };
 
@@ -45,7 +60,7 @@ export function HomePage() {
               onToggleAll={toggleSelectAll} onDownload={handleDownloadPDF}
               isGenerating={isGenerating} progress={progress}
             />
-            {user && <HistoryPanel history={history} onSelect={setUrl} onDelete={deleteFromHistory} />}
+            {user && <HistoryPanel history={history} onSelect={handleHistorySelect} onDelete={deleteFromHistory} />}
           </div>
         }
         content={
