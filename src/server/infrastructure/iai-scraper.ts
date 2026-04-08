@@ -69,10 +69,22 @@ export class IaiScraper implements IScraper {
     const images: string[] = [];
 
     $("img").each((_, el) => {
-      const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-original");
+      const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-original") || $(el).attr("data-lazy-src");
       if (src) {
         try {
           const abs = new URL(src, url).href;
+          if (!images.includes(abs) && !abs.startsWith("data:") && !abs.includes("spacer.gif")) images.push(abs);
+        } catch {}
+      }
+    });
+
+    // Look for background images in style attributes
+    $("[style*='background-image']").each((_, el) => {
+      const style = $(el).attr("style") || "";
+      const match = style.match(/url\(['"]?([^'"]+)['"]?\)/);
+      if (match && match[1]) {
+        try {
+          const abs = new URL(match[1], url).href;
           if (!images.includes(abs) && !abs.startsWith("data:")) images.push(abs);
         } catch {}
       }
@@ -80,7 +92,7 @@ export class IaiScraper implements IScraper {
 
     $("a").each((_, el) => {
       const href = $(el).attr("href");
-      if (href && href.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      if (href && href.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) {
         try {
           const abs = new URL(href, url).href;
           if (!images.includes(abs)) images.push(abs);
