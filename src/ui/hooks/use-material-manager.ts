@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ScrapedImage, ScrapeResult } from "../../domain/material/material.types";
+import { ScrapedImage, ScrapeResult, PDFSettings } from "../../domain/material/material.types";
 import { ScrapeMaterialUseCase } from "../../application/material/scrape-material.usecase";
 import { GeneratePDFUseCase } from "../../application/material/generate-pdf.usecase";
 import { HttpScraperService } from "../../infrastructure/material/http-scraper.service";
@@ -20,6 +20,11 @@ export function useMaterialManager() {
   const [progress, setProgress] = useState(0);
   const [scrapeMode, setScrapeMode] = useState<"page" | "sequence" | null>(null);
   const [fileName, setFileName] = useState("");
+  const [pdfSettings, setPdfSettings] = useState<PDFSettings>({
+    format: "a4",
+    orientation: "portrait",
+    margin: 10
+  });
 
   const handleScrape = useCallback(async (
     onScrapeSuccess?: (url: string, mode: "page" | "sequence", count: number, fileName: string, images: ScrapedImage[]) => void,
@@ -55,7 +60,7 @@ export function useMaterialManager() {
     setIsGenerating(true);
     setProgress(0);
     try {
-      const blob = await generatePDFUseCase.execute(selectedUrls, setProgress);
+      const blob = await generatePDFUseCase.execute(selectedUrls, setProgress, pdfSettings);
       downloadBlob(blob, `${fileName || "iai-material"}.pdf`);
       toast.success("PDF generated successfully!");
     } catch (error: any) {
@@ -63,7 +68,7 @@ export function useMaterialManager() {
     } finally {
       setIsGenerating(false);
     }
-  }, [images, fileName]);
+  }, [images, fileName, pdfSettings]);
 
   const toggleSelectAll = useCallback(() => {
     const allSelected = images.every((img) => img.selected);
@@ -77,7 +82,7 @@ export function useMaterialManager() {
   const loadImages = useCallback((urls: string[], mode: "page" | "sequence", name: string) => {
     setScrapeMode(mode);
     setFileName(name);
-    setImages(urls.map(url => ({ url, selected: true })));
+    setImages(urls.map(url => ({ url, selected: true, status: "idle" })));
   }, []);
 
   const inferFileName = (sourceUrl: string): string => {
@@ -113,10 +118,12 @@ export function useMaterialManager() {
     progress,
     scrapeMode,
     fileName, setFileName,
+    pdfSettings, setPdfSettings,
     handleScrape,
     handleDownloadPDF,
     toggleSelectAll,
     toggleImage,
-    loadImages
+    loadImages,
+    setImages
   };
 }

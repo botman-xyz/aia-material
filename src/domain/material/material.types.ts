@@ -13,6 +13,12 @@ export interface IScraperService {
   scrape(url: string): Promise<ScrapeResult>;
 }
 
+export interface PDFSettings {
+  format: "a4" | "letter" | "legal";
+  orientation: "portrait" | "landscape";
+  margin: number;
+}
+
 export interface IPDFGenerator {
-  generate(images: string[], onProgress: (p: number) => void): Promise<Blob>;
+  generate(images: string[], onProgress: (p: number) => void, settings?: PDFSettings): Promise<Blob>;
 }

@@ -20,6 +20,7 @@
         "./src/*"
       ]
     },
+    "types": ["react", "react-dom", "node"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   }

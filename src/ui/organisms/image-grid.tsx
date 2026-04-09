@@ -1,21 +1,58 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Image as ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Image as ImageIcon, LayoutGrid, List, GripVertical } from "lucide-react";
 import { AnimatePresence } from "motion/react";
-import { ImageCard } from "../molecules/image-card";
+import { SortableImageCard } from "../molecules/sortable-image-card";
 import { StatusBadge } from "../atoms/status-badge";
 import { ScrapedImage } from "../../domain/material/material.types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface ImageGridProps {
   images: ScrapedImage[];
   scrapeMode: "page" | "sequence" | null;
   onToggleImage: (index: number) => void;
+  onReorder: (newImages: ScrapedImage[]) => void;
 }
 
-export function ImageGrid({ images, scrapeMode, onToggleImage }: ImageGridProps) {
+export function ImageGrid({ images, scrapeMode, onToggleImage, onReorder }: ImageGridProps) {
   const [viewMode, setViewMode] = useState<"grid" | "catalog">("grid");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = images.findIndex((img) => img.url === active.id);
+      const newIndex = images.findIndex((img) => img.url === over.id);
+      onReorder(arrayMove(images, oldIndex, newIndex));
+    }
+  };
 
   return (
     <Card className="border-none shadow-sm bg-white rounded-2xl lg:h-[calc(100vh-200px)] min-h-[400px] flex flex-col overflow-hidden">
@@ -25,7 +62,7 @@ export function ImageGrid({ images, scrapeMode, onToggleImage }: ImageGridProps)
             <CardTitle className="text-lg font-semibold">Found Images</CardTitle>
             {scrapeMode && <StatusBadge mode={scrapeMode} />}
           </div>
-          <CardDescription className="text-xs sm:text-sm">Preview and select images to include in PDF.</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Preview, reorder (drag), and select images for PDF.</CardDescription>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {images.length > 0 && (
@@ -56,13 +93,24 @@ export function ImageGrid({ images, scrapeMode, onToggleImage }: ImageGridProps)
           {images.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className={`grid gap-3 sm:gap-4 ${viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1 sm:grid-cols-2"}`}>
-              <AnimatePresence>
-                {images.map((img, index) => (
-                  <ImageCard key={img.url} image={img} index={index} onToggle={() => onToggleImage(index)} />
-                ))}
-              </AnimatePresence>
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={images.map(img => img.url)}
+                strategy={rectSortingStrategy}
+              >
+                <div className={`grid gap-3 sm:gap-4 ${viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1 sm:grid-cols-2"}`}>
+                  <AnimatePresence>
+                    {images.map((img, index) => (
+                      <SortableImageCard key={img.url} image={img} index={index} onToggle={() => onToggleImage(index)} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </ScrollArea>
       </CardContent>

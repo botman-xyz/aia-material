@@ -7,6 +7,8 @@ import { MainLayout } from "../templates/main-layout";
 import { ControlPanel } from "../organisms/control-panel";
 import { ImageGrid } from "../organisms/image-grid";
 import { HistoryPanel } from "../organisms/history-panel";
+import { AIAnalysisPanel } from "../organisms/ai-analysis-panel";
+import { PDFSettingsPanel } from "../organisms/pdf-settings-panel";
 import { AuthSection } from "../molecules/auth-section";
 import { HistoryItem } from "../../infrastructure/history/history.repository";
 
@@ -22,12 +24,16 @@ export function HomePage() {
     progress,
     scrapeMode,
     fileName, setFileName,
+    pdfSettings, setPdfSettings,
     handleScrape,
     handleDownloadPDF,
     toggleSelectAll,
     toggleImage,
-    loadImages
+    loadImages,
+    setImages
   } = useMaterialManager();
+
+  const selectedImageUrls = images.filter(img => img.selected).map(img => img.url);
 
   const onScrapeSuccess = useCallback((scrapedUrl: string, mode: "page" | "sequence", count: number, name: string, scrapedImages: { url: string }[]) => {
     if (user) {
@@ -60,11 +66,13 @@ export function HomePage() {
               onToggleAll={toggleSelectAll} onDownload={handleDownloadPDF}
               isGenerating={isGenerating} progress={progress}
             />
+            {images.length > 0 && <PDFSettingsPanel settings={pdfSettings} onSettingsChange={setPdfSettings} />}
+            {images.length > 0 && <AIAnalysisPanel images={selectedImageUrls} />}
             {user && <HistoryPanel history={history} onSelect={handleHistorySelect} onDelete={deleteFromHistory} />}
           </div>
         }
         content={
-          <ImageGrid images={images} scrapeMode={scrapeMode} onToggleImage={toggleImage} />
+          <ImageGrid images={images} scrapeMode={scrapeMode} onToggleImage={toggleImage} onReorder={setImages} />
         }
       />
       <Toaster position="bottom-right" />

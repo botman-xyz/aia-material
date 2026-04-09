@@ -1,30 +1,34 @@
 import { jsPDF } from "jspdf";
-import { IPDFGenerator } from "../../domain/material/material.types";
+import { IPDFGenerator, PDFSettings } from "../../domain/material/material.types";
 
 export class JsPDFGenerator implements IPDFGenerator {
-  async generate(images: string[], onProgress: (p: number) => void): Promise<Blob> {
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  async generate(images: string[], onProgress: (p: number) => void, settings?: PDFSettings): Promise<Blob> {
+    const { format = "a4", orientation = "portrait", margin = 0 } = settings || {};
+    const pdf = new jsPDF({ orientation, unit: "mm", format });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
+    const drawAreaWidth = pageWidth - (margin * 2);
+    const drawAreaHeight = pageHeight - (margin * 2);
+
     for (let i = 0; i < images.length; i++) {
-      await this.addPageToPDF(pdf, images[i], i, pageWidth, pageHeight);
+      await this.addPageToPDF(pdf, images[i], i, drawAreaWidth, drawAreaHeight, margin);
       onProgress(((i + 1) / images.length) * 100);
     }
 
     return pdf.output("blob");
   }
 
-  private async addPageToPDF(pdf: jsPDF, imageUrl: string, index: number, pageWidth: number, pageHeight: number) {
+  private async addPageToPDF(pdf: jsPDF, imageUrl: string, index: number, drawAreaWidth: number, drawAreaHeight: number, margin: number) {
     try {
       const base64 = await this.fetchImageAsBase64(imageUrl);
       if (index > 0) pdf.addPage();
       
       const { width, height } = await this.getImageDimensions(base64);
-      const { drawWidth, drawHeight } = this.calculateDrawDimensions(width, height, pageWidth, pageHeight);
+      const { drawWidth, drawHeight } = this.calculateDrawDimensions(width, height, drawAreaWidth, drawAreaHeight);
       
-      const x = (pageWidth - drawWidth) / 2;
-      const y = (pageHeight - drawHeight) / 2;
+      const x = margin + (drawAreaWidth - drawWidth) / 2;
+      const y = margin + (drawAreaHeight - drawHeight) / 2;
       pdf.addImage(base64, "JPEG", x, y, drawWidth, drawHeight);
     } catch (error) {
       console.error(`Error adding image ${index}:`, error);
