@@ -178,7 +178,7 @@ async function startServer() {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(__dirname, "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
   }
