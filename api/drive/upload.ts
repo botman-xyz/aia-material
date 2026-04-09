@@ -35,13 +35,18 @@ export default async function handler(
       name: request.body.name || 'scraped-material.pdf',
     };
     
-    // Handle file upload - for Vercel, the file comes as base64
-    const fileBuffer = request.body.file;
-    if (!fileBuffer) {
+    // Handle file upload - support both FormData and base64
+    let buffer: Buffer;
+    
+    if (request.body.file) {
+      // Base64 encoded
+      buffer = Buffer.from(request.body.file, 'base64');
+    } else if (request.body.data) {
+      // Raw data from FormData
+      buffer = Buffer.from(request.body.data);
+    } else {
       return response.status(400).json({ error: 'No file uploaded' });
     }
-    
-    const buffer = Buffer.from(fileBuffer, 'base64');
     
     const media = {
       mimeType: 'application/pdf',

@@ -103,12 +103,11 @@ export function useMaterialManager() {
       const uploadResponse = await fetch("/api/drive/upload", {
         method: "POST",
         credentials: "include",
-        body: (() => {
-          const formData = new FormData();
-          formData.append("file", blob, `${fileName || "iai-material"}.pdf`);
-          formData.append("name", `${fileName || "iai-material"}.pdf`);
-          return formData;
-        })()
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file: await blobToBase64(blob),
+          name: `${fileName || "iai-material"}.pdf`
+        })
       });
 
       if (uploadResponse.status === 401) {
@@ -184,6 +183,18 @@ export function useMaterialManager() {
       return "iai-material";
     }
     return "iai-material";
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   const downloadBlob = (blob: Blob, name: string) => {
