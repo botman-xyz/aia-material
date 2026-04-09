@@ -24,11 +24,11 @@ export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps)
   );
 
   return (
-    <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden">
+    <Card className="border-none shadow-sm bg-white dark:bg-[#1a1a1a] rounded-2xl overflow-hidden">
       <CardHeader className="pb-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <History size={18} className="text-[#1a1a1a]" />
+            <History size={18} className="text-[#1a1a1a] dark:text-white" />
             <CardTitle className="text-lg font-semibold">Recent Scrapes</CardTitle>
           </div>
         </div>
@@ -38,20 +38,20 @@ export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps)
             placeholder="Search history..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9 bg-[#f5f5f5] border-none rounded-xl text-xs focus-visible:ring-1 focus-visible:ring-[#1a1a1a]"
+            className="pl-9 h-9 bg-[#f5f5f5] dark:bg-white/5 border-none rounded-xl text-xs focus-visible:ring-1 focus-visible:ring-[#1a1a1a] dark:focus-visible:ring-white"
           />
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px]">
-          <div className="divide-y divide-[#f5f5f5]">
+          <div className="divide-y divide-[#f5f5f5] dark:divide-white/5">
             {filteredHistory.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-xs text-[#999]">No matches found</p>
               </div>
             ) : (
               filteredHistory.map((item) => (
-                <div key={item.id} className="p-4 hover:bg-[#f9f9f9] transition-colors group">
+                <div key={item.id} className="p-4 hover:bg-[#f9f9f9] dark:hover:bg-white/5 transition-colors group">
                   <div className="flex items-start justify-between gap-3">
                     <div 
                       className="flex-1 min-w-0 cursor-pointer"
@@ -64,7 +64,7 @@ export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps)
                           {item.timestamp.toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-sm font-medium truncate text-[#1a1a1a]">{item.fileName || "Untitled"}</p>
+                      <p className="text-sm font-medium truncate text-[#1a1a1a] dark:text-white">{item.fileName || "Untitled"}</p>
                       <p className="text-[10px] text-[#999] truncate">{item.url}</p>
                     </div>
                     <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">

@@ -53,11 +53,11 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
   };
 
   return (
-    <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden flex flex-col max-h-[500px]">
-      <CardHeader className="pb-4 border-b border-[#f5f5f5]">
+    <Card className="border-none shadow-sm bg-white dark:bg-[#1a1a1a] rounded-2xl overflow-hidden flex flex-col max-h-[500px]">
+      <CardHeader className="pb-4 border-b border-[#f5f5f5] dark:border-white/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#f5f5f5] rounded-xl text-[#1a1a1a]">
+            <div className="p-2 bg-[#f5f5f5] dark:bg-white/5 rounded-xl text-[#1a1a1a] dark:text-white">
               <Sparkles size={18} />
             </div>
             <div>
@@ -84,7 +84,7 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="rounded-xl justify-start h-auto py-3 px-4 border-[#eee] hover:border-[#1a1a1a] hover:bg-transparent text-left"
+                  className="rounded-xl justify-start h-auto py-3 px-4 border-[#eee] dark:border-white/10 hover:border-[#1a1a1a] dark:hover:border-white hover:bg-transparent text-left"
                   onClick={() => handleSend("Berikan ringkasan singkat dari materi ini berdasarkan gambar-gambar yang ada.")}
                   disabled={isAnalyzing || images.length === 0}
                 >
@@ -94,7 +94,7 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="rounded-xl justify-start h-auto py-3 px-4 border-[#eee] hover:border-[#1a1a1a] hover:bg-transparent text-left"
+                  className="rounded-xl justify-start h-auto py-3 px-4 border-[#eee] dark:border-white/10 hover:border-[#1a1a1a] dark:hover:border-white hover:bg-transparent text-left"
                   onClick={() => handleSend("Identifikasi topik-topik utama dan konsep kunci yang dibahas dalam materi ini.")}
                   disabled={isAnalyzing || images.length === 0}
                 >
@@ -107,13 +107,13 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
             <div className="space-y-4 pb-4">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`shrink-0 p-1.5 rounded-lg h-fit ${msg.role === "user" ? "bg-[#1a1a1a] text-white" : "bg-[#f5f5f5] text-[#1a1a1a]"}`}>
+                  <div className={`shrink-0 p-1.5 rounded-lg h-fit ${msg.role === "user" ? "bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a]" : "bg-[#f5f5f5] dark:bg-white/5 text-[#1a1a1a] dark:text-white"}`}>
                     {msg.role === "user" ? <User size={12} /> : <Bot size={12} />}
                   </div>
                   <div className={`max-w-[85%] text-xs leading-relaxed p-3 rounded-2xl ${
                     msg.role === "user" 
-                      ? "bg-[#1a1a1a] text-white rounded-tr-none" 
-                      : "bg-[#f9f9f9] text-[#333] border border-[#eee] rounded-tl-none"
+                      ? "bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] rounded-tr-none" 
+                      : "bg-[#f9f9f9] dark:bg-white/5 text-[#333] dark:text-[#ccc] border border-[#eee] dark:border-white/10 rounded-tl-none"
                   }`}>
                     {msg.content}
                   </div>
@@ -121,10 +121,10 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
               ))}
               {isAnalyzing && (
                 <div className="flex gap-3">
-                  <div className="shrink-0 p-1.5 rounded-lg h-fit bg-[#f5f5f5] text-[#1a1a1a]">
+                  <div className="shrink-0 p-1.5 rounded-lg h-fit bg-[#f5f5f5] dark:bg-white/5 text-[#1a1a1a] dark:text-white">
                     <Bot size={12} />
                   </div>
-                  <div className="bg-[#f9f9f9] text-[#333] border border-[#eee] p-3 rounded-2xl rounded-tl-none">
+                  <div className="bg-[#f9f9f9] dark:bg-white/5 text-[#333] dark:text-[#ccc] border border-[#eee] dark:border-white/10 p-3 rounded-2xl rounded-tl-none">
                     <Loader2 className="animate-spin text-[#999]" size={14} />
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
           )}
         </div>
 
-        <div className="p-4 border-t border-[#f5f5f5] bg-[#fcfcfc]">
+        <div className="p-4 border-t border-[#f5f5f5] dark:border-white/5 bg-[#fcfcfc] dark:bg-white/5">
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
             className="flex gap-2"
@@ -143,13 +143,13 @@ export function AIAnalysisPanel({ images }: AIAnalysisPanelProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isAnalyzing || images.length === 0}
-              className="rounded-xl border-[#eee] bg-white h-10 text-xs focus-visible:ring-1 focus-visible:ring-[#1a1a1a]"
+              className="rounded-xl border-[#eee] dark:border-white/10 bg-white dark:bg-white/5 h-10 text-xs focus-visible:ring-1 focus-visible:ring-[#1a1a1a] dark:focus-visible:ring-white"
             />
             <Button 
               type="submit" 
               size="icon" 
               disabled={isAnalyzing || !input.trim() || images.length === 0}
-              className="rounded-xl h-10 w-10 shrink-0 bg-[#1a1a1a] hover:bg-[#333]"
+              className="rounded-xl h-10 w-10 shrink-0 bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a] hover:bg-[#333] dark:hover:bg-white/90"
             >
               <Send size={16} />
             </Button>

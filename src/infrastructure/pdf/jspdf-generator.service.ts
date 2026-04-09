@@ -4,7 +4,12 @@ import { IPDFGenerator, PDFSettings } from "../../domain/material/material.types
 export class JsPDFGenerator implements IPDFGenerator {
   async generate(images: string[], onProgress: (p: number) => void, settings?: PDFSettings): Promise<Blob> {
     const { format = "a4", orientation = "portrait", margin = 0 } = settings || {};
-    const pdf = new jsPDF({ orientation, unit: "mm", format });
+    const pdf = new jsPDF({ 
+      orientation, 
+      unit: "mm", 
+      format,
+      compress: true // Enable PDF compression
+    });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
@@ -29,7 +34,9 @@ export class JsPDFGenerator implements IPDFGenerator {
       
       const x = margin + (drawAreaWidth - drawWidth) / 2;
       const y = margin + (drawAreaHeight - drawHeight) / 2;
-      pdf.addImage(base64, "JPEG", x, y, drawWidth, drawHeight);
+      
+      // Use FAST compression for images to reduce PDF size
+      pdf.addImage(base64, "JPEG", x, y, drawWidth, drawHeight, undefined, 'FAST');
     } catch (error) {
       console.error(`Error adding image ${index}:`, error);
     }

@@ -45,6 +45,12 @@ export class GeminiService {
     }
   }
 
+  async suggestFileName(images: string[]): Promise<string> {
+    const prompt = "Based on these images, suggest a short, descriptive filename for this material. Return ONLY the filename without extension, e.g., 'Modul_Akuntansi_IAI'. Keep it under 30 characters.";
+    const result = await this.analyzeImages(images, prompt);
+    return result.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+  }
+
   private async urlToBase64(url: string): Promise<string> {
     // We use our proxy to avoid CORS issues
     const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;

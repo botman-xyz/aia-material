@@ -21,12 +21,15 @@ export function HomePage() {
     images,
     isScraping,
     isGenerating,
+    isSuggesting,
     progress,
     scrapeMode,
     fileName, setFileName,
     pdfSettings, setPdfSettings,
     handleScrape,
+    handleSuggestFileName,
     handleDownloadPDF,
+    handleSaveToDrive,
     toggleSelectAll,
     toggleImage,
     loadImages,
@@ -63,8 +66,8 @@ export function HomePage() {
               onScrape={() => handleScrape(onScrapeSuccess)} 
               isScraping={isScraping}
               images={images} fileName={fileName} setFileName={setFileName}
-              onToggleAll={toggleSelectAll} onDownload={handleDownloadPDF}
-              isGenerating={isGenerating} progress={progress}
+              onToggleAll={toggleSelectAll} onDownload={handleDownloadPDF} onSaveToDrive={handleSaveToDrive} onSuggestName={handleSuggestFileName}
+              isGenerating={isGenerating} isSuggesting={isSuggesting} progress={progress}
             />
             {images.length > 0 && <PDFSettingsPanel settings={pdfSettings} onSettingsChange={setPdfSettings} />}
             {images.length > 0 && <AIAnalysisPanel images={selectedImageUrls} />}

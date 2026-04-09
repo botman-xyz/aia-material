@@ -21,7 +21,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, index, onToggle }) 
       transition={{ delay: index * 0.02 }}
       className={cn(
         "group relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all cursor-pointer",
-        image.selected ? "border-[#1a1a1a]" : "border-transparent bg-[#f9f9f9]"
+        image.selected ? "border-[#1a1a1a] dark:border-white" : "border-transparent bg-[#f9f9f9] dark:bg-white/5"
       )}
       onClick={onToggle}
     >
@@ -39,7 +39,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, index, onToggle }) 
           <DialogTrigger
             render={
               <button 
-                className="w-5 h-5 rounded-full bg-white/80 text-[#666] flex items-center justify-center hover:bg-white transition-colors"
+                className="w-5 h-5 rounded-full bg-white/80 dark:bg-black/50 text-[#666] dark:text-white flex items-center justify-center hover:bg-white dark:hover:bg-black transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Maximize2 size={10} />
@@ -57,7 +57,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, index, onToggle }) 
         </Dialog>
         <div className={cn(
           "w-5 h-5 rounded-full flex items-center justify-center transition-colors",
-          image.selected ? "bg-[#1a1a1a] text-white" : "bg-white/80 text-[#ccc]"
+          image.selected ? "bg-[#1a1a1a] dark:bg-white text-white dark:text-[#1a1a1a]" : "bg-white/80 dark:bg-black/50 text-[#ccc]"
         )}>
           {image.selected && <CheckCircle2 size={14} />}
         </div>

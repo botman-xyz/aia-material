@@ -5,6 +5,7 @@ import { ScrapeMaterialUseCase } from "../../application/material/scrape-materia
 import { GeneratePDFUseCase } from "../../application/material/generate-pdf.usecase";
 import { HttpScraperService } from "../../infrastructure/material/http-scraper.service";
 import { JsPDFGenerator } from "../../infrastructure/pdf/jspdf-generator.service";
+import { geminiService } from "../../infrastructure/ai/gemini.service";
 
 // Dependencies Injection
 const scraperService = new HttpScraperService();
@@ -17,6 +18,7 @@ export function useMaterialManager() {
   const [images, setImages] = useState<ScrapedImage[]>([]);
   const [isScraping, setIsScraping] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [scrapeMode, setScrapeMode] = useState<"page" | "sequence" | null>(null);
   const [fileName, setFileName] = useState("");
@@ -55,6 +57,21 @@ export function useMaterialManager() {
     }
   }, [url, scrapeUseCase]);
 
+  const handleSuggestFileName = useCallback(async () => {
+    if (images.length === 0) return;
+    setIsSuggesting(true);
+    try {
+      const imageUrls = images.slice(0, 3).map(img => img.url);
+      const suggestion = await geminiService.suggestFileName(imageUrls);
+      setFileName(suggestion);
+      toast.success("AI suggested a filename!");
+    } catch (error: any) {
+      toast.error("Failed to suggest filename");
+    } finally {
+      setIsSuggesting(false);
+    }
+  }, [images]);
+
   const handleDownloadPDF = useCallback(async () => {
     const selectedUrls = images.filter((img) => img.selected).map((img) => img.url);
     setIsGenerating(true);
@@ -63,6 +80,74 @@ export function useMaterialManager() {
       const blob = await generatePDFUseCase.execute(selectedUrls, setProgress, pdfSettings);
       downloadBlob(blob, `${fileName || "iai-material"}.pdf`);
       toast.success("PDF generated successfully!");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [images, fileName, pdfSettings]);
+
+  const handleSaveToDrive = useCallback(async () => {
+    const selectedUrls = images.filter((img) => img.selected).map((img) => img.url);
+    if (selectedUrls.length === 0) {
+      toast.error("No images selected");
+      return;
+    }
+
+    setIsGenerating(true);
+    setProgress(0);
+    try {
+      const blob = await generatePDFUseCase.execute(selectedUrls, setProgress, pdfSettings);
+      
+      const uploadResponse = await fetch("/api/drive/upload", {
+        method: "POST",
+        credentials: "include",
+        body: (() => {
+          const formData = new FormData();
+          formData.append("file", blob, `${fileName || "iai-material"}.pdf`);
+          formData.append("name", `${fileName || "iai-material"}.pdf`);
+          return formData;
+        })()
+      });
+
+      if (uploadResponse.status === 401) {
+        // Need to authenticate
+        const authUrlResponse = await fetch("/api/auth/google/url", { credentials: "include" });
+        if (!authUrlResponse.ok) {
+          const text = await authUrlResponse.text();
+          throw new Error(`Auth URL error: ${text.substring(0, 100)}`);
+        }
+        const { url: authUrl } = await authUrlResponse.json();
+        
+        const authWindow = window.open(authUrl, "google_auth", "width=600,height=700");
+        if (!authWindow) {
+          toast.error("Popup blocked. Please allow popups.");
+          return;
+        }
+
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
+            window.removeEventListener("message", handleMessage);
+            toast.success("Authenticated! Saving to Drive...");
+            handleSaveToDrive(); // Retry
+          }
+        };
+        window.addEventListener("message", handleMessage);
+      } else if (!uploadResponse.ok) {
+        let errorMessage = "Failed to upload to Drive";
+        const responseClone = uploadResponse.clone();
+        try {
+          const errorData = await uploadResponse.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          const text = await responseClone.text();
+          errorMessage = `Server error (${uploadResponse.status}): ${text.substring(0, 100)}`;
+        }
+        throw new Error(errorMessage);
+      } else {
+        const data = await uploadResponse.json();
+        toast.success(`Saved to Google Drive! File ID: ${data.id}`);
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -115,12 +200,15 @@ export function useMaterialManager() {
     images,
     isScraping,
     isGenerating,
+    isSuggesting,
     progress,
     scrapeMode,
     fileName, setFileName,
     pdfSettings, setPdfSettings,
     handleScrape,
+    handleSuggestFileName,
     handleDownloadPDF,
+    handleSaveToDrive,
     toggleSelectAll,
     toggleImage,
     loadImages,
