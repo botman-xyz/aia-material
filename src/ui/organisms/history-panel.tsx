@@ -15,13 +15,16 @@ interface HistoryPanelProps {
 
 export function HistoryPanel({ history, onSelect, onDelete }: HistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterMode, setFilterMode] = useState<"all" | "page" | "sequence">("all");
 
   if (history.length === 0) return null;
 
-  const filteredHistory = history.filter(item => 
-    item.fileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.url.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history.filter(item => {
+    const matchesSearch = item.fileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.url.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMode = filterMode === "all" || item.mode === filterMode;
+    return matchesSearch && matchesMode;
+  });
 
   return (
     <Card className="border-none shadow-sm bg-white dark:bg-[#1a1a1a] rounded-2xl overflow-hidden">

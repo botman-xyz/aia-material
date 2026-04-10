@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { ScrapedImage, ScrapeResult, PDFSettings } from "../../domain/material/material.types";
 import { ScrapeMaterialUseCase } from "../../application/material/scrape-material.usecase";
@@ -13,7 +14,29 @@ const pdfGenerator = new JsPDFGenerator();
 const scrapeUseCase = new ScrapeMaterialUseCase(scraperService);
 const generatePDFUseCase = new GeneratePDFUseCase(pdfGenerator);
 
+// Keyboard shortcuts handler
+function useKeyboardShortcuts() {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + S - Download PDF
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        // Trigger download - handled by parent
+        document.dispatchEvent(new CustomEvent('keyboard:download'));
+      }
+      // Ctrl/Cmd + A - Select all
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent('keyboard:selectall'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+}
+
 export function useMaterialManager() {
+  useKeyboardShortcuts();
   // Default URL - can be overridden via VITE_DEFAULT_URL env var
   const DEFAULT_URL = "";
   const [url, setUrl] = useState(DEFAULT_URL);
@@ -75,14 +98,22 @@ export function useMaterialManager() {
     }
   }, [images]);
 
-  const handleDownloadPDF = useCallback(async () => {
+  const handleDownloadPDF = useCallback(async (format: "pdf" | "zip" = "pdf") => {
     const selectedUrls = images.filter((img) => img.selected).map((img) => img.url);
     setIsGenerating(true);
     setProgress(0);
     try {
-      const blob = await generatePDFUseCase.execute(selectedUrls, setProgress, pdfSettings);
-      downloadBlob(blob, `${fileName || "iai-material"}.pdf`);
-      toast.success("PDF generated successfully!");
+      if (format === "zip") {
+        // TODO: Install jszip to enable ZIP export
+        // const zip = await createZip(selectedUrls, setProgress);
+        // downloadBlob(zip, `${fileName || "iai-material"}.zip`);
+        // toast.success("ZIP downloaded successfully!");
+        toast.error("ZIP export: Run 'npm install jszip @types/jszip' first");
+      } else {
+        const blob = await generatePDFUseCase.execute(selectedUrls, setProgress, pdfSettings);
+        downloadBlob(blob, `${fileName || "iai-material"}.pdf`);
+        toast.success("PDF generated successfully!");
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {

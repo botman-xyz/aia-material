@@ -1,10 +1,13 @@
 import { ThemeProvider } from "next-themes";
 import { HomePage } from "./ui/pages/home-page";
+import { ErrorBoundary } from "./ui/components/error-boundary";
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light">
-      <HomePage />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <HomePage />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

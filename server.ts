@@ -16,6 +16,37 @@ import { ScrapeUseCase } from "./src/server/application/scrape.usecase";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Simple rate limiter (in-memory)
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 30; // 30 requests per minute
+
+function rateLimitMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const record = requestCounts.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+  
+  record.count++;
+  next();
+}
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of requestCounts) {
+    if (now > record.resetTime) requestCounts.delete(ip);
+  }
+}, 5 * 60 * 1000); // Every 5 minutes
+
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
@@ -33,6 +64,9 @@ app.use(cors({
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
+
+// Apply rate limiting
+app.use(rateLimitMiddleware);
 
 const appUrl = (process.env.APP_URL || "").replace(/\/$/, "");
 
@@ -171,7 +205,12 @@ app.get("/api/proxy-image", async (req, res) => {
         "Referer": urlObj.origin,
       },
     });
-    res.setHeader("Content-Type", response.headers["content-type"] || "image/jpeg");
+    
+    const contentType = response.headers["content-type"] || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    // Cache for 1 hour (public), vary by URL
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Vary", "url");
     res.send(response.data);
   } catch {
     res.status(500).send("Failed to fetch image");

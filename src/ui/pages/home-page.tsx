@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { useMaterialManager } from "../hooks/use-material-manager";
@@ -7,10 +7,14 @@ import { MainLayout } from "../templates/main-layout";
 import { ControlPanel } from "../organisms/control-panel";
 import { ImageGrid } from "../organisms/image-grid";
 import { HistoryPanel } from "../organisms/history-panel";
-import { AIAnalysisPanel } from "../organisms/ai-analysis-panel";
 import { PDFSettingsPanel } from "../organisms/pdf-settings-panel";
 import { AuthSection } from "../molecules/auth-section";
 import { HistoryItem } from "../../infrastructure/history/history.repository";
+
+// Lazy load AI panel to reduce initial bundle
+const AIAnalysisPanel = lazy(() => 
+  import("../organisms/ai-analysis-panel").then(m => ({ default: m.AIAnalysisPanel }))
+);
 
 export function HomePage() {
   const { user, loading, login, logout } = useAuth();
@@ -70,7 +74,11 @@ export function HomePage() {
               isGenerating={isGenerating} isSuggesting={isSuggesting} progress={progress}
             />
             {images.length > 0 && <PDFSettingsPanel settings={pdfSettings} onSettingsChange={setPdfSettings} />}
-            {images.length > 0 && <AIAnalysisPanel images={selectedImageUrls} />}
+            {images.length > 0 && (
+              <Suspense fallback={null}>
+                <AIAnalysisPanel images={selectedImageUrls} />
+              </Suspense>
+            )}
             {user && <HistoryPanel history={history} onSelect={handleHistorySelect} onDelete={deleteFromHistory} />}
           </div>
         }
