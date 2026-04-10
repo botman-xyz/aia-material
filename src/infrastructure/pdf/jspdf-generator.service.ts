@@ -16,15 +16,25 @@ export class JsPDFGenerator implements IPDFGenerator {
     const drawAreaWidth = pageWidth - (margin * 2);
     const drawAreaHeight = pageHeight - (margin * 2);
 
+    const failedImages: number[] = [];
+
     for (let i = 0; i < images.length; i++) {
-      await this.addPageToPDF(pdf, images[i], i, drawAreaWidth, drawAreaHeight, margin, quality);
+      const success = await this.addPageToPDF(pdf, images[i], i, drawAreaWidth, drawAreaHeight, margin, quality);
+      if (!success) {
+        failedImages.push(i + 1);
+      }
       onProgress(((i + 1) / images.length) * 100);
+    }
+
+    // Report any failures to the caller
+    if (failedImages.length > 0) {
+      throw new Error(`Failed to load ${failedImages.length} image(s): page(s) ${failedImages.join(', ')}`);
     }
 
     return pdf.output("blob");
   }
 
-  private async addPageToPDF(pdf: jsPDF, imageUrl: string, index: number, drawAreaWidth: number, drawAreaHeight: number, margin: number, quality: "high" | "medium" | "low") {
+  private async addPageToPDF(pdf: jsPDF, imageUrl: string, index: number, drawAreaWidth: number, drawAreaHeight: number, margin: number, quality: "high" | "medium" | "low"): Promise<boolean> {
     try {
       let base64 = await this.fetchImageAsBase64(imageUrl);
       if (index > 0) pdf.addPage();
@@ -43,8 +53,10 @@ export class JsPDFGenerator implements IPDFGenerator {
       const y = margin + (drawAreaHeight - drawHeight) / 2;
       
       pdf.addImage(base64, "JPEG", x, y, drawWidth, drawHeight, undefined, 'FAST');
+      return true;
     } catch (error) {
       console.error(`Error adding image ${index}:`, error);
+      return false;
     }
   }
 

@@ -155,12 +155,20 @@ app.post("/api/scrape", async (req, res) => {
 app.get("/api/proxy-image", async (req, res) => {
   const imageUrl = req.query.url as string;
   if (!imageUrl) return res.status(400).send("Image URL is required");
+  
+  // Validate domain to prevent abuse
+  const allowedDomains = ['iaiglobal.or.id', 'web.iaiglobal.or.id'];
   try {
+    const urlObj = new URL(imageUrl);
+    if (!allowedDomains.includes(urlObj.hostname)) {
+      return res.status(403).send("Domain not allowed");
+    }
+    
     const response = await axios.get(imageUrl, {
       responseType: "arraybuffer",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Referer": new URL(imageUrl).origin,
+        "Referer": urlObj.origin,
       },
     });
     res.setHeader("Content-Type", response.headers["content-type"] || "image/jpeg");

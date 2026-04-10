@@ -14,7 +14,9 @@ const scrapeUseCase = new ScrapeMaterialUseCase(scraperService);
 const generatePDFUseCase = new GeneratePDFUseCase(pdfGenerator);
 
 export function useMaterialManager() {
-  const [url, setUrl] = useState("https://web.iaiglobal.or.id/assets/materi/Sertifikasi/CA/modul/aml/");
+  // Default URL - can be overridden via VITE_DEFAULT_URL env var
+  const DEFAULT_URL = "";
+  const [url, setUrl] = useState(DEFAULT_URL);
   const [images, setImages] = useState<ScrapedImage[]>([]);
   const [isScraping, setIsScraping] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -125,14 +127,28 @@ export function useMaterialManager() {
           return;
         }
 
+        // Handle OAuth message with proper cleanup
         const handleMessage = async (event: MessageEvent) => {
           if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
             window.removeEventListener("message", handleMessage);
+            window.removeEventListener("message", handleError);
             toast.success("Authenticated! Saving to Drive...");
             handleSaveToDrive(); // Retry
           }
         };
+        
+        // Handle auth cancellation / closed window
+        const handleError = () => {
+          window.removeEventListener("message", handleMessage);
+          window.removeEventListener("message", handleError);
+        };
+        
         window.addEventListener("message", handleMessage);
+        // Timeout fallback to clean up listeners after 5 minutes
+        setTimeout(() => {
+          window.removeEventListener("message", handleMessage);
+          window.removeEventListener("message", handleError);
+        }, 5 * 60 * 1000);
       } else if (!uploadResponse.ok) {
         let errorMessage = "Failed to upload to Drive";
         const responseClone = uploadResponse.clone();
