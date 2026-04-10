@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
 import express from "express";
 import cors from "cors";
 import axios from "axios";
@@ -186,4 +189,4 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 // Export for Vercel
-module.exports = app;
+export default app;
