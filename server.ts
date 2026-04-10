@@ -190,3 +190,11 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 // Export for Vercel
 export default app;
+
+// Start server if running locally (not as Vercel function)
+if (process.env.VERCEL === undefined) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
